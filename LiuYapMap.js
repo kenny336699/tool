@@ -107,96 +107,125 @@ const CHANGING_RULES = {
   YOUNG_YIN: { value: 8, changing: false, baseYao: 0 }, // 少陰
   OLD_YANG: { value: 9, changing: true, baseYao: 1 }, // 老陽變陰
 };
-// 天干列表
-const HEAVENLY_STEMS = [
-  "甲",
-  "乙",
-  "丙",
-  "丁",
-  "戊",
-  "己",
-  "庚",
-  "辛",
-  "壬",
-  "癸",
+// 地支列表
+const EARTHLY_BRANCHES = [
+  "子",
+  "丑",
+  "寅",
+  "卯",
+  "辰",
+  "巳",
+  "午",
+  "未",
+  "申",
+  "酉",
+  "戌",
+  "亥",
 ];
 
-// 納甲規則：八宮卦對應的天干起始位置
-const PALACE_STEM_START = {
-  1: { up: 6, down: 1 }, // 乾宮 - 上卦始己，下卦始甲
-  2: { up: 8, down: 3 }, // 兌宮 - 上卦始辛，下卦始丙
-  3: { up: 7, down: 2 }, // 離宮 - 上卦始庚，下卦始乙
-  4: { up: 1, down: 6 }, // 震宮 - 上卦始甲，下卦始己
-  5: { up: 3, down: 8 }, // 巽宮 - 上卦始丙，下卦始辛
-  6: { up: 2, down: 7 }, // 坎宮 - 上卦始乙，下卦始庚
-  7: { up: 4, down: 9 }, // 艮宮 - 上卦始丁，下卦始壬
-  8: { up: 9, down: 4 }, // 坤宮 - 上卦始壬，下卦始丁
+// 納甲規則：八宮卦對應的天干地支
+const PALACE_NAJIA_RULES = {
+  1: {
+    // 乾宮：乾內甲子外壬午
+    inner: {
+      stem: "甲",
+      branches: ["子", "寅", "辰"], // 內卦地支順序
+    },
+    outer: {
+      stem: "壬",
+      branches: ["午", "申", "戌"], // 外卦地支順序
+    },
+  },
+  6: {
+    // 坎宮：坎內戊寅外戊申
+    inner: {
+      stem: "戊",
+      branches: ["寅", "辰", "午"],
+    },
+    outer: {
+      stem: "戊",
+      branches: ["申", "戌", "子"],
+    },
+  },
+  4: {
+    // 震宮：震內庚子外庚午
+    inner: {
+      stem: "庚",
+      branches: ["子", "寅", "辰"],
+    },
+    outer: {
+      stem: "庚",
+      branches: ["午", "申", "戌"],
+    },
+  },
+  3: {
+    // 離宮：離內己卯外己酉
+    inner: {
+      stem: "己",
+      branches: ["卯", "巳", "未"],
+    },
+    outer: {
+      stem: "己",
+      branches: ["酉", "亥", "丑"],
+    },
+  },
+  5: {
+    // 巽宮：巽內辛丑外辛未
+    inner: {
+      stem: "辛",
+      branches: ["丑", "卯", "巳"],
+    },
+    outer: {
+      stem: "辛",
+      branches: ["未", "酉", "亥"],
+    },
+  },
+  7: {
+    // 艮宮：艮內丙辰外丙戌
+    inner: {
+      stem: "丙",
+      branches: ["辰", "午", "申"],
+    },
+    outer: {
+      stem: "丙",
+      branches: ["戌", "子", "寅"],
+    },
+  },
+  8: {
+    // 坤宮：坤內乙未外癸丑
+    inner: {
+      stem: "乙",
+      branches: ["未", "酉", "亥"],
+    },
+    outer: {
+      stem: "癸",
+      branches: ["丑", "卯", "巳"],
+    },
+  },
+  2: {
+    // 兌宮：兌內丁巳外丁亥
+    inner: {
+      stem: "丁",
+      branches: ["巳", "未", "酉"],
+    },
+    outer: {
+      stem: "丁",
+      branches: ["亥", "丑", "卯"],
+    },
+  },
 };
 
-// 納甲函數
-function getNajia(hexagram) {
-  const palace = hexagrams[hexagram].palace;
-  if (!palace) return null;
-
-  const stems = PALACE_STEM_START[palace];
-  const upperTrigramYao = hexagram.slice(0, 3);
-  const lowerTrigramYao = hexagram.slice(3, 6);
-
-  // 取得上卦納甲
-  const upperStems = getTrigramStems(upperTrigramYao, stems.up);
-  // 取得下卦納甲
-  const lowerStems = getTrigramStems(lowerTrigramYao, stems.down);
-
-  return [...upperStems, ...lowerStems];
-}
-
-// 計算單個卦的納甲
-function getTrigramStems(trigram, startStem) {
-  const stems = [];
-  const yaoCount = trigram
-    .split("")
-    .reduce((acc, curr) => acc + parseInt(curr), 0);
-
-  // 陽爻從下往上納甲
-  for (let i = 2; i >= 0; i--) {
-    if (trigram[i] === "1") {
-      // 陽爻
-      const stemIndex = (startStem - 1 + stems.length) % 10;
-      stems[i] = HEAVENLY_STEMS[stemIndex];
-    }
-  }
-
-  // 陰爻順序補全
-  let yinCount = 0;
-  for (let i = 0; i < 3; i++) {
-    if (trigram[i] === "0") {
-      // 陰爻
-      const stemIndex = (startStem + yaoCount + yinCount) % 10;
-      stems[i] = HEAVENLY_STEMS[stemIndex];
-      yinCount++;
-    }
-  }
-
-  return stems;
-}
-
-// 擴展現有的 hexagrams 物件，加入納甲資訊
-function enhanceHexagramsWithNajia() {
-  for (const [key, value] of Object.entries(hexagrams)) {
-    value.najia = getNajia(key);
-  }
-}
-
-// 取得單個卦的納甲
+// 獲取卦的納甲信息
 function getHexagramNajia(hexagramKey) {
-  const najia = getNajia(hexagramKey);
-  if (!najia) return null;
+  const hexagram = hexagrams[hexagramKey];
+  if (!hexagram) return null;
 
-  return {
-    upper: najia.slice(0, 3), // 上卦納甲
-    lower: najia.slice(3, 6), // 下卦納甲
-    full: najia, // 完整納甲
-  };
+  return PALACE_NAJIA_RULES[hexagram.palace];
 }
-const najia = getHexagramNajia("111111"); // 乾卦
-console.log(najia.full); // ["己", "庚", "辛", "甲", "乙", "丙"]
+
+// 獲取完整的干支組合
+function getStemBranchCombination(stem, branch) {
+  return `${stem}${branch}`;
+}
+const najiaInfo = getHexagramNajia("111111"); // 取得乾卦納甲信息
+console.log(najiaInfo);
