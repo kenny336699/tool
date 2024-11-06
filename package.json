@@ -1,0 +1,17 @@
+{
+  "name": "tool",
+  "version": "1.0.0",
+  "description": "",
+  "main": "sha256.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chinese-lunar": "^0.1.4",
+    "crypto": "^1.0.1",
+    "lunar-javascript": "^1.6.12",
+    "xlsx": "^0.18.5"
+  }
+}
