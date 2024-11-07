@@ -1,22 +1,25 @@
 const trigrams = {
   // 乾(天)
-  111: { name: "乾", nature: "金", symbol: "天", number: 1 },
+  111: { name: "乾", nature: "1", symbol: "天", number: 1 },
   // 兌(澤)
-  110: { name: "兌", nature: "金", symbol: "澤", number: 2 },
+  110: { name: "兌", nature: "1", symbol: "澤", number: 2 },
   // 離(火)
-  101: { name: "離", nature: "火", symbol: "火", number: 3 },
+  101: { name: "離", nature: "4", symbol: "火", number: 3 },
   // 震(雷)
-  100: { name: "震", nature: "木", symbol: "雷", number: 4 },
+  "001": { name: "震", nature: "2", symbol: "雷", number: 4 },
   // 巽(風)
-  "011": { name: "巽", nature: "木", symbol: "風", number: 5 },
+  "011": { name: "巽", nature: "2", symbol: "風", number: 5 },
   // 坎(水)
-  "010": { name: "坎", nature: "水", symbol: "水", number: 6 },
+  "010": { name: "坎", nature: "3", symbol: "水", number: 6 },
   // 艮(山)
-  "001": { name: "艮", nature: "土", symbol: "山", number: 7 },
+  100: { name: "艮", nature: "5", symbol: "山", number: 7 },
   // 坤(地)
-  "000": { name: "坤", nature: "土", symbol: "地", number: 8 },
+  "000": { name: "坤", nature: "5", symbol: "地", number: 8 },
 };
 
+function getTrigramByNumber(number) {
+  return Object.values(trigrams).find((trigram) => trigram.number === number);
+}
 const fivePhase = ["金", "木", "水", "火", "土"];
 
 const hexagrams = {
@@ -46,7 +49,7 @@ const hexagrams = {
   "001010": { name: "解", number: 40, palace: 4, type: 3 },
   "001110": { name: "恆", number: 32, palace: 4, type: 4 },
   "000110": { name: "升", number: 46, palace: 4, type: 5 },
-  "010110": { name: "井", number: 44, palace: 4, type: 6 },
+  "010110": { name: "井", number: 48, palace: 4, type: 6 },
   "011110": { name: "升", number: 46, palace: 4, type: 7 },
   "011001": { name: "恆", number: 32, palace: 4, type: 8 },
 
@@ -101,131 +104,246 @@ const hexagrams = {
   100110: { name: "損", number: 41, palace: 2, type: 8 },
 };
 
-const CHANGING_RULES = {
-  OLD_YIN: { value: 6, changing: true, baseYao: 0 }, // 老陰變陽
-  YOUNG_YANG: { value: 7, changing: false, baseYao: 1 }, // 少陽
-  YOUNG_YIN: { value: 8, changing: false, baseYao: 0 }, // 少陰
-  OLD_YANG: { value: 9, changing: true, baseYao: 1 }, // 老陽變陰
-};
-// 地支列表
-const EARTHLY_BRANCHES = [
-  "子",
-  "丑",
-  "寅",
-  "卯",
-  "辰",
-  "巳",
-  "午",
-  "未",
-  "申",
-  "酉",
-  "戌",
-  "亥",
+// Alternative array format
+const BRANCH_ELEMENT_ARRAY = [
+  { branch: "子", element: "水", number: 2 },
+  { branch: "丑", element: "土", number: 5 },
+  { branch: "寅", element: "木", number: 3 },
+  { branch: "卯", element: "木", number: 3 },
+  { branch: "辰", element: "土", number: 5 },
+  { branch: "巳", element: "火", number: 4 },
+  { branch: "午", element: "火", number: 4 },
+  { branch: "未", element: "土", number: 5 },
+  { branch: "申", element: "金", number: 1 },
+  { branch: "酉", element: "金", number: 1 },
+  { branch: "戌", element: "土", number: 5 },
+  { branch: "亥", element: "水", number: 2 },
 ];
 
+// 地支列表
+const branchMap = BRANCH_ELEMENT_ARRAY.reduce((map, branchObj) => {
+  map[branchObj.branch] = branchObj;
+  return map;
+}, {});
 // 納甲規則：八宮卦對應的天干地支
 const PALACE_NAJIA_RULES = {
   1: {
     // 乾宮：乾內甲子外壬午
     inner: {
       stem: "甲",
-      branches: ["子", "寅", "辰"], // 內卦地支順序
+      branches: [branchMap["子"], branchMap["寅"], branchMap["辰"]], // 內卦地支順序
     },
     outer: {
       stem: "壬",
-      branches: ["午", "申", "戌"], // 外卦地支順序
-    },
-  },
-  6: {
-    // 坎宮：坎內戊寅外戊申
-    inner: {
-      stem: "戊",
-      branches: ["寅", "辰", "午"],
-    },
-    outer: {
-      stem: "戊",
-      branches: ["申", "戌", "子"],
-    },
-  },
-  4: {
-    // 震宮：震內庚子外庚午
-    inner: {
-      stem: "庚",
-      branches: ["子", "寅", "辰"],
-    },
-    outer: {
-      stem: "庚",
-      branches: ["午", "申", "戌"],
-    },
-  },
-  3: {
-    // 離宮：離內己卯外己酉
-    inner: {
-      stem: "己",
-      branches: ["卯", "巳", "未"],
-    },
-    outer: {
-      stem: "己",
-      branches: ["酉", "亥", "丑"],
-    },
-  },
-  5: {
-    // 巽宮：巽內辛丑外辛未
-    inner: {
-      stem: "辛",
-      branches: ["丑", "卯", "巳"],
-    },
-    outer: {
-      stem: "辛",
-      branches: ["未", "酉", "亥"],
-    },
-  },
-  7: {
-    // 艮宮：艮內丙辰外丙戌
-    inner: {
-      stem: "丙",
-      branches: ["辰", "午", "申"],
-    },
-    outer: {
-      stem: "丙",
-      branches: ["戌", "子", "寅"],
-    },
-  },
-  8: {
-    // 坤宮：坤內乙未外癸丑
-    inner: {
-      stem: "乙",
-      branches: ["未", "酉", "亥"],
-    },
-    outer: {
-      stem: "癸",
-      branches: ["丑", "卯", "巳"],
+      branches: [branchMap["午"], branchMap["申"], branchMap["戌"]], // 外卦地支順序
     },
   },
   2: {
     // 兌宮：兌內丁巳外丁亥
     inner: {
       stem: "丁",
-      branches: ["巳", "未", "酉"],
+      branches: [branchMap["巳"], branchMap["未"], branchMap["酉"]],
     },
     outer: {
       stem: "丁",
-      branches: ["亥", "丑", "卯"],
+      branches: [branchMap["亥"], branchMap["丑"], branchMap["卯"]],
     },
+  },
+  3: {
+    // 離宮：離內己卯外己酉
+    inner: {
+      stem: "己",
+      branches: [branchMap["卯"], branchMap["巳"], branchMap["未"]],
+    },
+    outer: {
+      stem: "己",
+      branches: [branchMap["酉"], branchMap["亥"], branchMap["丑"]],
+    },
+  },
+  4: {
+    // 震宮：震內庚子外庚午
+    inner: {
+      stem: "庚",
+      branches: [branchMap["子"], branchMap["寅"], branchMap["辰"]],
+    },
+    outer: {
+      stem: "庚",
+      branches: [branchMap["午"], branchMap["申"], branchMap["戌"]],
+    },
+  },
+  5: {
+    // 巽宮：巽內辛丑外辛未
+    inner: {
+      stem: "辛",
+      branches: [branchMap["丑"], branchMap["卯"], branchMap["巳"]],
+    },
+    outer: {
+      stem: "辛",
+      branches: [branchMap["未"], branchMap["酉"], branchMap["亥"]],
+    },
+  },
+  6: {
+    // 坎宮：坎內戊寅外戊申
+    inner: {
+      stem: "戊",
+      branches: [branchMap["寅"], branchMap["辰"], branchMap["午"]],
+    },
+    outer: {
+      stem: "戊",
+      branches: [branchMap["申"], branchMap["戌"], branchMap["子"]],
+    },
+  },
+  7: {
+    // 艮宮：艮內丙辰外丙戌
+    inner: {
+      stem: "丙",
+      branches: [branchMap["辰"], branchMap["午"], branchMap["申"]],
+    },
+    outer: {
+      stem: "丙",
+      branches: [branchMap["戌"], branchMap["子"], branchMap["寅"]],
+    },
+  },
+  8: {
+    // 坤宮：坤內乙未外癸丑
+    inner: {
+      stem: "乙",
+      branches: [branchMap["未"], branchMap["酉"], branchMap["亥"]],
+    },
+    outer: {
+      stem: "癸",
+      branches: [branchMap["丑"], branchMap["卯"], branchMap["巳"]],
+    },
+  },
+};
+
+const FIVE_PHASE_RELATIONS = {
+  1: {
+    1: "兄弟", //金
+    2: "官鬼", //木
+    3: "子孫", //水
+    4: "妻財", //火
+    5: "父母", //土
+  },
+  2: {
+    1: "妻財",
+    2: "兄弟",
+    3: "父母",
+    4: "子孫",
+    5: "官鬼",
+  },
+  3: {
+    1: "父母",
+    2: "妻財",
+    3: "兄弟",
+    4: "官鬼",
+    5: "子孫",
+  },
+  4: {
+    1: "官鬼",
+    2: "父母",
+    3: "妻財",
+    4: "兄弟",
+    5: "子孫",
+  },
+  5: {
+    1: "子孫",
+    2: "妻財",
+    3: "官鬼",
+    4: "父母",
+    5: "兄弟",
   },
 };
 
 // 獲取卦的納甲信息
 function getHexagramNajia(hexagramKey) {
-  const hexagram = hexagrams[hexagramKey];
-  if (!hexagram) return null;
+  // Validate input
+  if (typeof hexagramKey !== "string" && typeof hexagramKey !== "number") {
+    throw new Error("Hexagram key must be a string or number");
+  }
 
-  return PALACE_NAJIA_RULES[hexagram.palace];
+  // Convert to string and ensure 6 digits
+  const hexStr = hexagramKey.toString();
+  if (hexStr.length !== 6) {
+    throw new Error("Hexagram key must be 6 digits long");
+  }
+
+  const hexgramEle =
+    FIVE_PHASE_RELATIONS[
+      getTrigramByNumber(hexagrams[hexagramKey].palace).nature
+    ];
+
+  // Split into outer and inner trigrams
+  const outerTrigramKey = hexStr.slice(0, 3);
+  const innerTrigramKey = hexStr.slice(3);
+
+  // Get trigram information
+  const outerTrigram = trigrams[outerTrigramKey];
+  const innerTrigram = trigrams[innerTrigramKey];
+  //納甲
+  const naJiaInner = PALACE_NAJIA_RULES[innerTrigram.number].inner;
+  const naJiaOuter = PALACE_NAJIA_RULES[outerTrigram.number].outer;
+
+  //找世應
+  let self = 6;
+  switch (hexagrams[hexagramKey].type) {
+    case 1:
+      self = 1;
+      break;
+    case 2:
+      self = 2;
+      break;
+    case 3:
+      self = 2;
+      break;
+    case 4:
+      self = 4;
+      break;
+    case 5:
+      self = 5;
+      break;
+    case 6:
+      self = 6;
+      break;
+    case 7:
+      self = 4;
+      break;
+    case 8:
+      self = 3;
+      break;
+  }
+  const resp = self >= 4 ? self - 3 : self + 3;
+
+  let liuSiu = [];
+  if (naJiaInner && Array.isArray(naJiaInner.branches)) {
+    console.log("1");
+    for (let i = 0; i < naJiaInner.branches.length; i++) {
+      liuSiu.push(hexgramEle[naJiaInner.branches[i].number]);
+    }
+  }
+  if (naJiaOuter && Array.isArray(naJiaOuter.branches)) {
+    for (let i = 0; i < naJiaOuter.branches.length; i++) {
+      liuSiu.push(hexgramEle[naJiaOuter.branches[i].number]);
+    }
+  }
+  liuSiu = liuSiu.reverse();
+  return {
+    hexgramEle,
+    outerTrigramKey,
+    innerTrigramKey,
+    outerTrigram,
+    innerTrigram,
+    naJiaOuter,
+    naJiaInner,
+    liuSiu,
+    self,
+    resp,
+  };
 }
 
 // 獲取完整的干支組合
 function getStemBranchCombination(stem, branch) {
   return `${stem}${branch}`;
 }
-const najiaInfo = getHexagramNajia("111111"); // 取得乾卦納甲信息
+const najiaInfo = getHexagramNajia("100111"); // 取得乾卦納甲信息
 console.log(najiaInfo);
