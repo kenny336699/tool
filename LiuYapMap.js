@@ -251,7 +251,16 @@ const FIVE_PHASE_RELATIONS = {
     5: "兄弟",
   },
 };
-
+function getStemBranchCombinations(...configs) {
+  const combinations = [];
+  configs.forEach((config) => {
+    const { stem, branches } = config;
+    branches.forEach((branch) => {
+      combinations.push(`${stem}${branch.branch}`);
+    });
+  });
+  return combinations;
+}
 // 獲取卦的納甲信息
 function getHexagramNajia(hexagramKey) {
   // Validate input
@@ -264,10 +273,7 @@ function getHexagramNajia(hexagramKey) {
   if (hexStr.length !== 6) {
     throw new Error("Hexagram key must be 6 digits long");
   }
-  console.log(
-    "getTrigramByNumber(hexagrams[hexagramKey].palace).nature",
-    getTrigramByNumber(hexagrams[hexagramKey].palace).nature
-  );
+
   const hexgramEle =
     FIVE_PHASE_RELATIONS[
       getTrigramByNumber(hexagrams[hexagramKey].palace).nature
@@ -286,8 +292,6 @@ function getHexagramNajia(hexagramKey) {
 
   //找世應
   let self = 6;
-
-  console.log("hexagrams[hexagramKey].type", hexagrams[hexagramKey].type);
   switch (hexagrams[hexagramKey].type) {
     case 1:
       self = 6;
@@ -318,7 +322,6 @@ function getHexagramNajia(hexagramKey) {
   //安六親
   let liuSiu = [];
   if (naJiaInner && Array.isArray(naJiaInner.branches)) {
-    console.log("naJiaInner.branches[i].number", naJiaInner.branches[0].number);
     for (let i = 0; i < naJiaInner.branches.length; i++) {
       liuSiu.push(hexgramEle[naJiaInner.branches[i].number]);
     }
@@ -328,7 +331,6 @@ function getHexagramNajia(hexagramKey) {
       liuSiu.push(hexgramEle[naJiaOuter.branches[i].number]);
     }
   }
-  liuSiu = liuSiu.reverse();
 
   //安伏神, 找出本卦所缺的六親, 然後從卦的本宮找出對應的六親及其位置
   // Calculate hidden spirits (伏神)
@@ -368,7 +370,7 @@ function getHexagramNajia(hexagramKey) {
       palaceLiuSiu.push(hexgramEle[palaceNaJiaOuter.branches[i].number]);
     }
   }
-
+  console.log("palaceLiuSiu", palaceLiuSiu);
   // Map missing relations to their positions in palace hexagram
   const hiddenSpirits = missingRelations.map((relation) => ({
     relation,
@@ -377,22 +379,26 @@ function getHexagramNajia(hexagramKey) {
       return acc;
     }, []),
   }));
-  console.log(hiddenSpirits);
 
+  const result = {
+    name: hexagrams[hexagramKey].name,
+    liuSiu: liuSiu,
+    element: getStemBranchCombinations(naJiaInner, naJiaOuter),
+  };
   return {
-    hexgramEle,
     outerTrigramKey,
     innerTrigramKey,
     outerTrigram,
     innerTrigram,
     naJiaOuter,
-    1: naJiaOuter.branches,
+    1: naJiaOuter.branches.reverse(),
     naJiaInner,
-    2: naJiaInner.branches,
+    2: naJiaInner.branches.reverse(),
     liuSiu,
     self,
     resp,
     hiddenSpirits,
+    result,
   };
 }
 
