@@ -256,7 +256,7 @@ function getStemBranchCombinations(...configs) {
   configs.forEach((config) => {
     const { stem, branches } = config;
     branches.forEach((branch) => {
-      combinations.push(`${stem}${branch.branch}`);
+      combinations.push(`${stem}${branch.branch}${branch.element}`);
     });
   });
   return combinations;
@@ -320,22 +320,22 @@ function getHexagramNajia(hexagramKey) {
   }
   const resp = self >= 4 ? self - 3 : self + 3;
   //安六親
-  let liuSiu = [];
+  let liuqin = [];
   if (naJiaInner && Array.isArray(naJiaInner.branches)) {
     for (let i = 0; i < naJiaInner.branches.length; i++) {
-      liuSiu.push(hexgramEle[naJiaInner.branches[i].number]);
+      liuqin.push(hexgramEle[naJiaInner.branches[i].number]);
     }
   }
   if (naJiaOuter && Array.isArray(naJiaOuter.branches)) {
     for (let i = 0; i < naJiaOuter.branches.length; i++) {
-      liuSiu.push(hexgramEle[naJiaOuter.branches[i].number]);
+      liuqin.push(hexgramEle[naJiaOuter.branches[i].number]);
     }
   }
 
   //安伏神, 找出本卦所缺的六親, 然後從卦的本宮找出對應的六親及其位置
   // Calculate hidden spirits (伏神)
   const allRelations = new Set(["兄弟", "子孫", "妻財", "官鬼", "父母"]);
-  const currentRelations = new Set(liuSiu);
+  const currentRelations = new Set(liuqin);
   const missingRelations = [...allRelations].filter(
     (x) => !currentRelations.has(x)
   );
@@ -358,23 +358,23 @@ function getHexagramNajia(hexagramKey) {
 
   const palaceNaJiaInner = PALACE_NAJIA_RULES[palaceInnerTrigram.number].inner;
   const palaceNaJiaOuter = PALACE_NAJIA_RULES[palaceOuterTrigram.number].outer;
-
-  let palaceLiuSiu = [];
+  console.log("palaceNajia", palaceNaJiaOuter);
+  let palaceliuqin = [];
   if (palaceNaJiaInner && Array.isArray(palaceNaJiaInner.branches)) {
     for (let i = 0; i < palaceNaJiaInner.branches.length; i++) {
-      palaceLiuSiu.push(hexgramEle[palaceNaJiaInner.branches[i].number]);
+      palaceliuqin.push(hexgramEle[palaceNaJiaInner.branches[i].number]);
     }
   }
   if (palaceNaJiaOuter && Array.isArray(palaceNaJiaOuter.branches)) {
     for (let i = 0; i < palaceNaJiaOuter.branches.length; i++) {
-      palaceLiuSiu.push(hexgramEle[palaceNaJiaOuter.branches[i].number]);
+      palaceliuqin.push(hexgramEle[palaceNaJiaOuter.branches[i].number]);
     }
   }
-  console.log("palaceLiuSiu", palaceLiuSiu);
+  console.log("palaceliuqin", palaceliuqin);
   // Map missing relations to their positions in palace hexagram
   const hiddenSpirits = missingRelations.map((relation) => ({
     relation,
-    positions: palaceLiuSiu.reduce((acc, curr, idx) => {
+    positions: palaceliuqin.reduce((acc, curr, idx) => {
       if (curr === relation) acc.push(idx + 1);
       return acc;
     }, []),
@@ -382,8 +382,9 @@ function getHexagramNajia(hexagramKey) {
 
   const result = {
     name: hexagrams[hexagramKey].name,
-    liuSiu: liuSiu,
+    liuqin: liuqin,
     element: getStemBranchCombinations(naJiaInner, naJiaOuter),
+    hiddenSpirits,
   };
   return {
     outerTrigramKey,
@@ -394,7 +395,7 @@ function getHexagramNajia(hexagramKey) {
     1: naJiaOuter.branches.reverse(),
     naJiaInner,
     2: naJiaInner.branches.reverse(),
-    liuSiu,
+    liuqin,
     self,
     resp,
     hiddenSpirits,
