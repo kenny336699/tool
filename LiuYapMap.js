@@ -4,7 +4,7 @@ import {
   PALACE_NAJIA_RULES,
   FIVE_PHASE_RELATIONS,
 } from "./data.js";
-
+import { findSelfResponse } from "./util.js";
 function getTrigramByNumber(number) {
   return Object.values(trigrams).find((trigram) => trigram.number === number);
 }
@@ -19,6 +19,10 @@ function getStemBranchCombinations(...configs) {
   });
   return combinations;
 }
+//卦的五行與六神關係
+const hexgramEle = (key) => {
+  return FIVE_PHASE_RELATIONS[getTrigramByNumber(hexagrams[key].palace).nature];
+};
 // 獲取卦的納甲信息
 function getHexagramNajia(hexagramKey) {
   // Validate input
@@ -36,7 +40,7 @@ function getHexagramNajia(hexagramKey) {
     FIVE_PHASE_RELATIONS[
       getTrigramByNumber(hexagrams[hexagramKey].palace).nature
     ];
-
+  console.log("hexgramEle", hexgramEle);
   // Split into outer and inner trigrams
   const outerTrigramKey = hexStr.slice(0, 3);
   const innerTrigramKey = hexStr.slice(3);
@@ -49,34 +53,8 @@ function getHexagramNajia(hexagramKey) {
   const naJiaOuter = PALACE_NAJIA_RULES[outerTrigram.number].outer;
 
   //找世應
-  let self = 6;
-  switch (hexagrams[hexagramKey].type) {
-    case 1:
-      self = 6;
-      break;
-    case 2:
-      self = 1;
-      break;
-    case 3:
-      self = 2;
-      break;
-    case 4:
-      self = 3;
-      break;
-    case 5:
-      self = 4;
-      break;
-    case 6:
-      self = 5;
-      break;
-    case 7:
-      self = 4;
-      break;
-    case 8:
-      self = 3;
-      break;
-  }
-  const resp = self >= 4 ? self - 3 : self + 3;
+  const { self, resp } = findSelfResponse(hexagrams[hexagramKey].type);
+
   //安六親
   let liuqin = [];
 
@@ -141,34 +119,39 @@ function getHexagramNajia(hexagramKey) {
           }, [])[0]
         : null,
   }));
+  let yiuLines = [];
+  const all = [...naJiaInner.branches, ...naJiaOuter.branches];
+  console.log(all);
+  for (let i = 0; i < 6; i++) {
+    let yiuLine = {
+      // hiddensStemBranch: {
+      //   heavenlyStem: "丙",
+      //   earthlyBranch: "申",
+      //   element: "金",
+      //   relation: "兄弟",
+      // },
+      stemBranch: {
+        heavenlyStem: i > 2 ? naJiaOuter.stem : naJiaInner.stem,
+        earthlyBranch: all[i].branch,
+        element: all[i].element,
+        relation: liuqin[i],
+      },
+    };
+    yiuLines.push(yiuLine);
+  }
 
   const result = {
     name: hexagrams[hexagramKey].name,
     liuqin: liuqin,
-    element: getStemBranchCombinations(naJiaInner, naJiaOuter),
-    hiddenSpirits: hiddenSpirits,
-    temp: getStemBranchCombinations(palaceNaJiaInner, palaceNaJiaOuter),
+    yiuLines,
+    // element: getStemBranchCombinations(naJiaInner, naJiaOuter),
+    // hiddenSpirits: hiddenSpirits,
+    // temp: getStemBranchCombinations(palaceNaJiaInner, palaceNaJiaOuter),
   };
   return {
-    outerTrigramKey,
-    innerTrigramKey,
-    outerTrigram,
-    innerTrigram,
-    naJiaOuter,
-    1: naJiaOuter.branches.reverse(),
-    naJiaInner,
-    2: naJiaInner.branches.reverse(),
-    liuqin,
-    self,
-    resp,
-    hiddenSpirits,
     result,
   };
 }
 
-// 獲取完整的干支組合
-function getStemBranchCombination(stem, branch) {
-  return `${stem}${branch}`;
-}
 const najiaInfo = getHexagramNajia("110011"); // 取得乾卦納甲信息
 console.log(najiaInfo);
