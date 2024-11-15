@@ -19,6 +19,27 @@ function getStemBranchCombinations(...configs) {
   });
   return combinations;
 }
+const findByPosition = (combinedArray, targetPosition) => {
+  // Find item where positions matches targetPosition
+  return (
+    combinedArray.find((item) => item.positions === targetPosition) || null
+  );
+};
+const matchPositions = (arrayA, arrayB) => {
+  return arrayA.map((aItem) => {
+    // Find matching B item (position is 1-based, so we subtract 1 for 0-based array index)
+    const bItem = arrayB[aItem.positions - 1];
+
+    // Combine the properties from both items
+    return {
+      relation: aItem.relation,
+      positions: aItem.positions,
+      branch: bItem.branch,
+      element: bItem.element,
+      number: bItem.number,
+    };
+  });
+};
 //卦的五行與六神關係
 const hexgramEle = (key) => {
   return FIVE_PHASE_RELATIONS[getTrigramByNumber(hexagrams[key].palace).nature];
@@ -40,7 +61,7 @@ function getHexagramNajia(hexagramKey) {
     FIVE_PHASE_RELATIONS[
       getTrigramByNumber(hexagrams[hexagramKey].palace).nature
     ];
-  console.log("hexgramEle", hexgramEle);
+
   // Split into outer and inner trigrams
   const outerTrigramKey = hexStr.slice(0, 3);
   const innerTrigramKey = hexStr.slice(3);
@@ -96,7 +117,7 @@ function getHexagramNajia(hexagramKey) {
 
   const palaceNaJiaInner = PALACE_NAJIA_RULES[palaceInnerTrigram.number].inner;
   const palaceNaJiaOuter = PALACE_NAJIA_RULES[palaceOuterTrigram.number].outer;
-  console.log(getStemBranchCombinations(palaceNaJiaInner, palaceNaJiaOuter));
+
   let palaceliuqin = [];
   if (palaceNaJiaInner && Array.isArray(palaceNaJiaInner.branches)) {
     for (let i = 0; i < palaceNaJiaInner.branches.length; i++) {
@@ -108,6 +129,9 @@ function getHexagramNajia(hexagramKey) {
       palaceliuqin.push(hexgramEle[palaceNaJiaOuter.branches[i].number]);
     }
   }
+
+  const allh = [...palaceNaJiaInner.branches, ...palaceNaJiaOuter.branches];
+
   // Map missing relations to their positions in palace hexagram
   const hiddenSpirits = missingRelations.map((relation) => ({
     relation,
@@ -119,17 +143,23 @@ function getHexagramNajia(hexagramKey) {
           }, [])[0]
         : null,
   }));
+  const hidden = matchPositions(hiddenSpirits, allh);
   let yiuLines = [];
   const all = [...naJiaInner.branches, ...naJiaOuter.branches];
-  console.log(all);
+
   for (let i = 0; i < 6; i++) {
+    const hidden1 = findByPosition(hidden, i + 1);
     let yiuLine = {
-      // hiddensStemBranch: {
-      //   heavenlyStem: "丙",
-      //   earthlyBranch: "申",
-      //   element: "金",
-      //   relation: "兄弟",
-      // },
+      hiddensStemBranch:
+        hidden1 != null
+          ? {
+              heavenlyStem:
+                i > 2 ? palaceNaJiaInner.stem : palaceNaJiaInner.stem,
+              earthlyBranch: hidden1.branch,
+              element: hidden1.element,
+              relation: hidden1.relation,
+            }
+          : null,
       stemBranch: {
         heavenlyStem: i > 2 ? naJiaOuter.stem : naJiaInner.stem,
         earthlyBranch: all[i].branch,
@@ -142,11 +172,7 @@ function getHexagramNajia(hexagramKey) {
 
   const result = {
     name: hexagrams[hexagramKey].name,
-    liuqin: liuqin,
     yiuLines,
-    // element: getStemBranchCombinations(naJiaInner, naJiaOuter),
-    // hiddenSpirits: hiddenSpirits,
-    // temp: getStemBranchCombinations(palaceNaJiaInner, palaceNaJiaOuter),
   };
   return {
     result,
