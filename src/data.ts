@@ -1,4 +1,38 @@
-export const hexagrams = {
+// 定義基本類型接口
+export interface Hexagram {
+  name: string; // 卦名
+  number: number; // 卦序
+  palace: number; // 宮位 (1-8)
+  type: number; // 卦類型 (1-8)
+}
+
+export interface Trigram {
+  name: string; // 卦名
+  nature: string; // 性質
+  symbol: string; // 象徵
+  number: number; // 序號
+}
+
+export interface BranchElement {
+  branch: string; // 地支
+  element: string; // 五行
+  number: number; // 五行數字 (1金2木3水4火5土)
+}
+
+export interface NajiaRule {
+  inner: {
+    // 內卦納甲
+    stem: string; // 天干
+    branches: BranchElement[]; // 地支陣列
+  };
+  outer: {
+    // 外卦納甲
+    stem: string; // 天干
+    branches: BranchElement[]; // 地支陣列
+  };
+}
+
+export const hexagrams: Record<string, Hexagram> = {
   // 乾宮卦
   111111: { name: "乾為天", number: 1, palace: 1, type: 1 },
   111110: { name: "姤", number: 44, palace: 1, type: 2 },
@@ -33,7 +67,7 @@ export const hexagrams = {
   "001110": { name: "恆", number: 32, palace: 4, type: 4 },
   "000110": { name: "升", number: 46, palace: 4, type: 5 },
   "010110": { name: "井", number: 48, palace: 4, type: 6 },
-  "011010": { name: "大過", number: 28, palace: 4, type: 7 },
+  "011110": { name: "大過", number: 28, palace: 4, type: 7 },
   "011001": { name: "隨", number: 17, palace: 4, type: 8 },
 
   // 巽宮卦
@@ -77,7 +111,8 @@ export const hexagrams = {
   "010000": { name: "比", number: 8, palace: 8, type: 8 },
 };
 
-export const trigrams = {
+// 八卦對應表
+export const trigrams: Record<string, Trigram> = {
   // 乾(天)
   111: { name: "乾", nature: "1", symbol: "天", number: 1 },
   // 兌(澤)
@@ -96,7 +131,8 @@ export const trigrams = {
   "000": { name: "坤", nature: "5", symbol: "地", number: 8 },
 };
 
-export const BRANCH_ELEMENT_ARRAY = [
+// 地支五行對照表
+export const BRANCH_ELEMENT_ARRAY: BranchElement[] = [
   { branch: "子", element: "水", number: 3 },
   { branch: "丑", element: "土", number: 5 },
   { branch: "寅", element: "木", number: 2 },
@@ -110,11 +146,16 @@ export const BRANCH_ELEMENT_ARRAY = [
   { branch: "戌", element: "土", number: 5 },
   { branch: "亥", element: "水", number: 3 },
 ];
-export const branchMap = BRANCH_ELEMENT_ARRAY.reduce((map, branchObj) => {
-  map[branchObj.branch] = branchObj;
-  return map;
-}, {});
-export const PALACE_NAJIA_RULES = {
+// 地支映射表
+export const branchMap: Record<string, BranchElement> =
+  BRANCH_ELEMENT_ARRAY.reduce(
+    (map: Record<string, BranchElement>, branchObj) => {
+      map[branchObj.branch] = branchObj;
+      return map;
+    },
+    {}
+  );
+export const PALACE_NAJIA_RULES: Record<number, NajiaRule> = {
   1: {
     // 乾宮：乾內甲子外壬午
     inner: {
@@ -205,7 +246,8 @@ export const PALACE_NAJIA_RULES = {
   },
 };
 
-export const FIVE_PHASE_RELATIONS = {
+// 五行生克關係表
+export const FIVE_PHASE_RELATIONS: Record<number, Record<number, string>> = {
   1: {
     1: "兄弟", //金
     2: "妻財", //木
